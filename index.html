@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Multiplayer Sand Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #e0e0e0;
+            overflow-x: hidden;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Top UI Bar */
+        .ui-top {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .ui-top-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .ui-top-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .game-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f39c12;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 16px;
+            }
+            .ui-top {
+                padding: 10px 15px;
+            }
+        }
+
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        .status-connected {
+            background-color: #2ecc71;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+        }
+
+        .status-disconnected {
+            background-color: #e74c3c;
+            box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Particle Counter */
+        .particle-counter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .particle-counter span {
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        /* Instructions Toggle */
+        .instructions-toggle {
+            background: rgba(243, 156, 18, 0.2);
+            border: 1px solid rgba(243, 156, 18, 0.4);
+            color: #f39c12;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            min-height: 36px;
+        }
+
+        .instructions-toggle:hover {
+            background: rgba(243, 156, 18, 0.3);
+            border-color: rgba(243, 156, 18, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .instructions-toggle:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .instructions-toggle {
+                padding: 10px 14px;
+                font-size: 12px;
+                min-height: 44px;
+            }
+        }
+
+        /* Instructions Panel */
+        .instructions-panel {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            z-index: 999;
+            background: rgba(26, 26, 46, 0.98);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 300px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .instructions-panel.hidden {
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+        }
+
+        .instructions-panel h3 {
+            margin: 0 0 12px 0;
+            color: #f39c12;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .instructions-panel ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #b0b0b0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .instructions-panel li {
+            margin-bottom: 8px;
+        }
+
+        .instructions-panel kbd {
+            background: rgba(243, 156, 18, 0.2);
+            border: 1px solid rgba(243, 156, 18, 0.4);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #f39c12;
+        }
+
+        @media (max-width: 768px) {
+            .instructions-panel {
+                position: fixed;
+                top: auto;
+                bottom: 100px;
+                left: 20px;
+                right: 20px;
+                max-width: none;
+                max-height: 40vh;
+                overflow-y: auto;
+            }
+        }
+
+        /* Game Container */
+        #game-container {
+            position: relative;
+            margin-top: 80px;
+            margin-bottom: 80px;
+            border: 3px solid rgba(243, 156, 18, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.6), 0 0 60px rgba(243, 156, 18, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            #game-container {
+                margin-top: 120px;
+                margin-bottom: 100px;
+                border-width: 2px;
+            }
+        }
+
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+
+        /* Bottom UI Bar */
+        .ui-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .ui-bottom {
+                padding: 12px 15px;
+            }
+        }
+
+        /* Reset Button */
+        .reset-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            min-height: 44px;
+            min-width: 120px;
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(231, 76, 60, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .reset-btn {
+                padding: 14px 28px;
+                font-size: 16px;
+                min-width: 140px;
+                min-height: 48px;
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .ui-top {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 10px;
+            }
+
+            .ui-top-left, .ui-top-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .game-title {
+                font-size: 14px;
+            }
+
+            .connection-status, .particle-counter {
+                font-size: 12px;
+            }
+
+            .instructions-panel {
+                bottom: 80px;
+                padding: 15px;
+            }
+        }
+
+        /* Material Selector */
+        .material-selector {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .material-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: rgba(52, 73, 94, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            min-width: 60px;
+        }
+
+        .material-btn:hover {
+            background: rgba(52, 73, 94, 0.8);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .material-btn.active {
+            background: rgba(243, 156, 18, 0.3);
+            border-color: rgba(243, 156, 18, 0.6);
+            box-shadow: 0 0 10px rgba(243, 156, 18, 0.4);
+        }
+
+        .material-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .material-label {
+            font-size: 11px;
+            color: #e0e0e0;
+            font-weight: 500;
+        }
+
+        .material-btn.active .material-label {
+            color: #f39c12;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .material-selector {
+                gap: 6px;
+            }
+
+            .material-btn {
+                padding: 8px 8px;
+                min-width: 50px;
+            }
+
+            .material-preview {
+                width: 16px;
+                height: 16px;
+            }
+
+            .material-label {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .material-selector {
+                gap: 4px;
+            }
+
+            .material-btn {
+                padding: 6px 6px;
+                min-width: 45px;
+            }
+
+            .material-label {
+                display: none;
+            }
+        }
+
+        /* Prevent text selection on UI elements */
+        .ui-top, .ui-bottom, .reset-btn, .instructions-toggle, .material-btn {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top UI Bar -->
+    <div class="ui-top">
+        <div class="ui-top-left">
+            <h1 class="game-title">Multiplayer Sand Game</h1>
+            <div class="connection-status">
+                <span class="status-indicator status-disconnected" id="status-indicator"></span>
+                <span id="connection-status">Connecting...</span>
+            </div>
+            <div class="particle-counter">
+                <span id="particle-count">0</span> particles
+            </div>
+        </div>
+        <div class="ui-top-right">
+            <div class="material-selector" id="material-selector">
+                <button class="material-btn active" data-material="SAND" title="Sand (Key: 1)">
+                    <span class="material-preview" style="background-color: #f39c12;"></span>
+                    <span class="material-label">Sand</span>
+                </button>
+                <button class="material-btn" data-material="WATER" title="Water (Key: 2)">
+                    <span class="material-preview" style="background-color: #3498db;"></span>
+                    <span class="material-label">Water</span>
+                </button>
+                <button class="material-btn" data-material="FIRE" title="Fire (Key: 3)">
+                    <span class="material-preview" style="background-color: #e74c3c;"></span>
+                    <span class="material-label">Fire</span>
+                </button>
+                <button class="material-btn" data-material="ACID" title="Acid (Key: 4)">
+                    <span class="material-preview" style="background-color: #2ecc71;"></span>
+                    <span class="material-label">Acid</span>
+                </button>
+            </div>
+            <button class="instructions-toggle" id="instructions-toggle">Show Instructions</button>
+        </div>
+    </div>
+
+    <!-- Instructions Panel -->
+    <div class="instructions-panel hidden" id="instructions-panel">
+        <h3>How to Play</h3>
+        <ul>
+            <li><strong>Click/Drag</strong> to place particles</li>
+            <li><strong>Touch/Drag</strong> on mobile devices</li>
+            <li>Select materials: <strong>Sand</strong>, <strong>Water</strong>, <strong>Fire</strong>, <strong>Acid</strong></li>
+            <li>Use <kbd>1</kbd>-<kbd>4</kbd> keys to switch materials quickly</li>
+            <li>Materials react: Water+Fire=Steam, Acid+Sand=Gas, Fire+Sand=Extinguish</li>
+            <li>Press <kbd>R</kbd> key or click Reset to clear all particles</li>
+            <li>Works in real-time with other players!</li>
+        </ul>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container"></div>
+
+    <!-- Bottom UI Bar -->
+    <div class="ui-bottom">
+        <button class="reset-btn" id="reset-btn">Reset World</button>
+    </div>
+    
+    <!-- Phaser.js -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <!-- Matter.js -->
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.2/dist/socket.io.min.js"></script>
+    
+    <!-- Game logic -->
+    <script src="game.js"></script>
+</body>
+</html>
+
