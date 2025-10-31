@@ -108,7 +108,10 @@ const MATERIALS = {
         reactions: {
             FIRE: 'EXTINGUISH', // Water + Fire = water puts out fire
             ICE: 'FREEZE', // Water + Ice = water freezes to ice
-            LAVA: 'SOLIDIFY' // Water + Lava = lava solidifies to stone
+            LAVA: 'SOLIDIFY', // Water + Lava = lava solidifies to stone
+            GAS: 'FOAMIFY',
+            PLASMA: 'STEAM',
+            GLOW_GLASS: 'SHIMMER'
         },
         viscosity: 0.1 // Flows freely
     },
@@ -128,7 +131,11 @@ const MATERIALS = {
             ICE: 'MELT', // Fire + Ice = ice melts to water
             OIL: 'IGNITE', // Fire + Oil = oil ignites (spreads)
             WOOD: 'BURN', // Fire + Wood = wood burns
-            GAS: 'EXPLODE' // Fire + Gas = explosion
+            GAS: 'EXPLODE', // Fire + Gas = explosion
+            SAND: 'GLASSIFY', // Fire + Sand = glass
+            GLASS: 'ENERGIZE',
+            CRYSTAL: 'ENERGIZE',
+            FOAM: 'EVAPORATE'
         },
         spreadReactions: {
             OIL: 'IGNITE', // Fire spreads to nearby oil
@@ -209,7 +216,8 @@ const MATERIALS = {
         },
         reactions: {
             ICE: 'CONDENSE', // Steam + Ice = steam condenses to water
-            METAL: 'CONDENSE' // Steam + Metal = steam condenses on cold metal
+            METAL: 'CONDENSE', // Steam + Metal = steam condenses on cold metal
+            GLASS: 'CRYSTALLIZE'
         }
     },
     LAVA: {
@@ -226,7 +234,8 @@ const MATERIALS = {
             WATER: 'SOLIDIFY', // Lava + Water = lava solidifies to stone
             ICE: 'SOLIDIFY', // Lava + Ice = lava solidifies to stone, ice melts
             GLASS: 'MELT_GLASS', // Lava + Glass = glass melts
-            METAL: 'MELT_METAL' // Lava + Metal = metal melts
+            METAL: 'PLASMAFY', // Lava + Metal = plasma burst
+            SAND: 'GLASSIFY'
         },
         viscosity: 0.6, // Very viscous, flows slowly
         ignitionThreshold: 100, // Lava is already hot
@@ -281,7 +290,9 @@ const MATERIALS = {
         },
         reactions: {
             FIRE: 'EXPLODE', // Gas + Fire = big explosion, spreads fire widely
-            STEAM: 'SEPARATE' // Gas + Steam = separate (both rise)
+            STEAM: 'SEPARATE', // Gas + Steam = separate (both rise)
+            WATER: 'FOAMIFY',
+            GLOW_GLASS: 'SHIMMER'
         },
         ignitionThreshold: 20, // Gas ignites very easily
         heatRate: 10 // Heats up very quickly
@@ -297,7 +308,7 @@ const MATERIALS = {
             // Metal falls quickly
         },
         reactions: {
-            LAVA: 'MELT_METAL', // Metal + Lava = metal melts
+            LAVA: 'PLASMAFY', // Metal + Lava = plasma burst
             ACID: 'CORRODE', // Metal + Acid = metal corrodes
             WATER: 'OXIDIZE', // Metal + Water = slow corrosion (small chance)
             STEAM: 'CONDENSE' // Metal + Steam = steam condenses on metal
@@ -338,16 +349,324 @@ const MATERIALS = {
             ACID: 'SEPARATE', // Glass + Acid = separate (glass is acid-resistant)
             LAVA: 'MELT_GLASS', // Glass + Lava = glass melts
             STONE: 'IMPACT_SHATTER', // Glass + Stone = glass shatters from high impact
-            METAL: 'IMPACT_SHATTER' // Glass + Metal = glass shatters from high impact
+            METAL: 'IMPACT_SHATTER', // Glass + Metal = glass shatters from high impact
+            STEAM: 'CRYSTALLIZE', // Glass + Steam = energised crystal structures
+            FIRE: 'ENERGIZE' // Fire + Glass = energises glass toward glow state
         },
         ignitionThreshold: 200, // Glass doesn't burn
         heatRate: 0.5, // Slow to heat up
         impactShatterThreshold: 3.0 // Minimum impact velocity to shatter
+    },
+    GLOW_GLASS: {
+        id: 'GLOW_GLASS',
+        name: 'Glow Glass',
+        color: 0xfff3a5, // Warm golden glow
+        density: 0.001,
+        friction: 0.25,
+        restitution: 0.7,
+        physics: {
+            // Slightly lighter, gentle float
+        },
+        reactions: {
+            WATER: 'SHIMMER', // Water cools glow glass making shimmer particles
+            FIRE: 'PLASMAFY', // Extreme heat can turn glow glass into plasma
+            LAVA: 'PLASMAFY'
+        },
+        heatOutput: 4,
+        heatRate: 2,
+        lightEmission: 0.8,
+        ignitionThreshold: 60
+    },
+    CRYSTAL: {
+        id: 'CRYSTAL',
+        name: 'Crystal',
+        color: 0xb39ddb, // Soft violet crystal color
+        density: 0.0014,
+        friction: 0.45,
+        restitution: 0.8,
+        physics: {
+            // Crystal shards bounce and shimmer
+        },
+        reactions: {
+            FIRE: 'ENERGIZE',
+            LAVA: 'ENERGIZE',
+            ACID: 'DISSOLVE'
+        },
+        ignitionThreshold: 140,
+        heatRate: 1,
+        shatterThreshold: 4.5
+    },
+    PLASMA: {
+        id: 'PLASMA',
+        name: 'Plasma',
+        color: 0xff66ff, // Neon pink/purple
+        density: 0.00002,
+        friction: 0.01,
+        restitution: 0.9,
+        physics: {
+            gravityScale: -0.95 // Plasma rises aggressively
+        },
+        reactions: {
+            WATER: 'STEAM',
+            GAS: 'EXPLODE',
+            METAL: 'ENERGIZE',
+            STEAM: 'AURORA_EVENT'
+        },
+        heatOutput: 20,
+        heatRate: 8,
+        ignitionThreshold: 0
+    },
+    FOAM: {
+        id: 'FOAM',
+        name: 'Foam',
+        color: 0xe8f6ff,
+        density: 0.0004,
+        friction: 0.08,
+        restitution: 0.2,
+        physics: {
+            gravityScale: -0.1
+        },
+        reactions: {
+            FIRE: 'EVAPORATE',
+            ACID: 'DISSOLVE',
+            LAVA: 'EVAPORATE'
+        },
+        viscosity: 0.05,
+        ignitionThreshold: 25,
+        heatRate: 2
+    },
+    AURORA: {
+        id: 'AURORA',
+        name: 'Aurora',
+        color: 0xb38bff,
+        density: 0.00005,
+        friction: 0.03,
+        restitution: 0.85,
+        physics: {
+            gravityScale: -0.75
+        },
+        reactions: {
+            WATER: 'SHIMMER',
+            STEAM: 'SHIMMER',
+            GAS: 'SHIMMER',
+            PLASMA: 'ENERGIZE'
+        },
+        heatOutput: 10,
+        heatRate: 6,
+        lightEmission: 1,
+        ignitionThreshold: 0,
+        eventMaterial: true
     }
 };
 
+const MATERIAL_METADATA = {
+    SAND: { order: 10, shortcut: '1', tier: 'base' },
+    WATER: { order: 20, shortcut: '2', tier: 'base' },
+    FIRE: { order: 30, shortcut: '3', tier: 'base' },
+    ACID: { order: 40, shortcut: '4', tier: 'base' },
+    ICE: { order: 50, shortcut: '5', tier: 'base' },
+    OIL: { order: 60, shortcut: '6', tier: 'base' },
+    STEAM: { order: 70, shortcut: '7', tier: 'base' },
+    LAVA: { order: 80, shortcut: '8', tier: 'base' },
+    WOOD: { order: 90, shortcut: 'Q', tier: 'base' },
+    STONE: { order: 100, shortcut: 'W', tier: 'base' },
+    GAS: { order: 110, shortcut: 'E', tier: 'base' },
+    METAL: { order: 120, shortcut: 'R', tier: 'base' },
+    SMOKE: { order: 130, shortcut: 'T', tier: 'base' },
+    GLASS: { order: 140, shortcut: 'Y', tier: 'base' },
+    GLOW_GLASS: { order: 210, shortcut: 'U', tier: 'advanced', unlockReaction: 'GLASSIFY', unlockThreshold: 3 },
+    CRYSTAL: { order: 220, shortcut: 'I', tier: 'advanced', unlockReaction: 'CRYSTALLIZE', unlockThreshold: 4 },
+    PLASMA: { order: 230, shortcut: 'O', tier: 'advanced', unlockReaction: 'PLASMAFY', unlockThreshold: 2 },
+    FOAM: { order: 240, shortcut: 'P', tier: 'advanced', unlockReaction: 'FOAMIFY', unlockThreshold: 5 },
+    AURORA: { order: 250, shortcut: 'J', tier: 'event', unlockReaction: 'AURORA_EVENT', unlockThreshold: 1, eventDuration: 120000 }
+};
+
+const BASE_MATERIALS = Object.entries(MATERIAL_METADATA)
+    .filter(([, meta]) => meta.tier === 'base')
+    .map(([id]) => id);
+
+let unlockedMaterials = new Set(BASE_MATERIALS);
+let materialUnlockCounters = {};
+let materialUnlockExpiry = {};
+let materialUnlockTimeouts = {};
+let eventTimerInterval = null;
+
+const REACTION_UNLOCKS = {
+    GLASSIFY: ['GLOW_GLASS'],
+    CRYSTALLIZE: ['CRYSTAL'],
+    PLASMAFY: ['PLASMA'],
+    FOAMIFY: ['FOAM'],
+    AURORA_EVENT: ['AURORA']
+};
+
+const COMMUNITY_GOALS = [
+    { id: 'steam_burst', label: 'Trigger 10 Steam reactions', reaction: 'STEAM', target: 10 },
+    { id: 'glassworks', label: 'Perform 6 Glassify reactions', reaction: 'GLASSIFY', target: 6 },
+    { id: 'foam_party', label: 'Whip up 8 Foamify reactions', reaction: 'FOAMIFY', target: 8 },
+    { id: 'plasma_show', label: 'Ignite 4 Plasmafy reactions', reaction: 'PLASMAFY', target: 4 },
+    { id: 'aurora_dance', label: 'Summon 3 Aurora events', reaction: 'AURORA_EVENT', target: 3 }
+];
+
+let communityProgress = COMMUNITY_GOALS.reduce((acc, goal) => {
+    acc[goal.id] = 0;
+    return acc;
+}, {});
+
+function adjustColor(colorInt, percent) {
+    const r = (colorInt >> 16) & 0xff;
+    const g = (colorInt >> 8) & 0xff;
+    const b = colorInt & 0xff;
+    const factor = Math.min(1, Math.max(-1, percent));
+    const adjust = (channel) => {
+        if (factor >= 0) {
+            return Math.min(255, Math.round(channel + (255 - channel) * factor));
+        }
+        return Math.max(0, Math.round(channel + channel * factor));
+    };
+    return (adjust(r) << 16) | (adjust(g) << 8) | adjust(b);
+}
+
+function colorToCss(colorInt, alpha = 1) {
+    const r = (colorInt >> 16) & 0xff;
+    const g = (colorInt >> 8) & 0xff;
+    const b = colorInt & 0xff;
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // Current selected material (default to SAND)
 let currentMaterial = MATERIALS.SAND.id;
+
+// Creative tool state
+let currentTool = 'brush';
+let brushSize = 8;
+let isPointerDown = false;
+let pointerStart = null;
+let lastBrushPoint = null;
+let pointerLatest = null;
+
+const TOOL_SHORTCUTS = {
+    B: 'brush',
+    L: 'line',
+    C: 'circle',
+    V: 'rectangle',
+    F: 'fan',
+    D: 'dropper'
+};
+
+// Reaction FX systems
+let effectManagers = {};
+let effectEmitters = {};
+let effectTexturesReady = false;
+let reactionAudioContext = null;
+
+// Reaction tracking
+let recentReactions = [];
+
+// Unlock notification pulse timer
+let unlockPulseTimers = {};
+
+const EFFECT_TEXTURE_SPECS = {
+    spark: { key: 'fx_spark', inner: 0xfff3a5, outer: 0xff7b47, radius: 18 },
+    smoke: { key: 'fx_smoke', inner: 0x666666, outer: 0x222222, radius: 24 },
+    steam: { key: 'fx_steam', inner: 0xffffff, outer: 0xcce6ff, radius: 22 },
+    foam: { key: 'fx_foam', inner: 0xffffff, outer: 0xaee6ff, radius: 20 },
+    plasma: { key: 'fx_plasma', inner: 0xffb7ff, outer: 0x8e44ad, radius: 26 },
+    crystal: { key: 'fx_crystal', inner: 0xdcd6ff, outer: 0x6c5ce7, radius: 24 },
+    shimmer: { key: 'fx_shimmer', inner: 0xffffd2, outer: 0xf5a623, radius: 16 },
+    aurora: { key: 'fx_aurora', inner: 0xcdb5ff, outer: 0x3ad6ff, radius: 30 }
+};
+
+const EFFECT_EMITTER_CONFIGS = {
+    spark: {
+        texture: 'fx_spark',
+        settings: {
+            speed: { min: 70, max: 220 },
+            scale: { start: 0.35, end: 0 },
+            alpha: { start: 0.9, end: 0 },
+            lifespan: { min: 250, max: 450 },
+            angle: { min: 0, max: 360 },
+            gravityY: 80
+        }
+    },
+    smoke: {
+        texture: 'fx_smoke',
+        settings: {
+            speed: { min: 15, max: 40 },
+            scale: { start: 0.45, end: 0.9 },
+            alpha: { start: 0.6, end: 0 },
+            lifespan: { min: 600, max: 900 },
+            angle: { min: 0, max: 360 },
+            gravityY: -20
+        }
+    },
+    steam: {
+        texture: 'fx_steam',
+        settings: {
+            speed: { min: 25, max: 60 },
+            scale: { start: 0.5, end: 1 },
+            alpha: { start: 0.55, end: 0 },
+            lifespan: { min: 400, max: 700 },
+            gravityY: -60
+        }
+    },
+    foam: {
+        texture: 'fx_foam',
+        settings: {
+            speed: { min: 15, max: 35 },
+            scale: { start: 0.35, end: 0 },
+            alpha: { start: 0.8, end: 0 },
+            lifespan: { min: 450, max: 650 },
+            gravityY: -25
+        }
+    },
+    plasma: {
+        texture: 'fx_plasma',
+        settings: {
+            speed: { min: 120, max: 260 },
+            scale: { start: 0.55, end: 0.15 },
+            alpha: { start: 0.95, end: 0 },
+            lifespan: { min: 300, max: 500 },
+            angle: { min: 0, max: 360 },
+            gravityY: -120,
+            blendMode: Phaser.BlendModes.ADD
+        }
+    },
+    crystal: {
+        texture: 'fx_crystal',
+        settings: {
+            speed: { min: 40, max: 120 },
+            scale: { start: 0.45, end: 0.1 },
+            alpha: { start: 0.9, end: 0 },
+            lifespan: { min: 500, max: 800 },
+            angle: { min: -30, max: 30 },
+            gravityY: 30
+        }
+    },
+    shimmer: {
+        texture: 'fx_shimmer',
+        settings: {
+            speed: { min: 20, max: 60 },
+            scale: { start: 0.6, end: 0 },
+            alpha: { start: 0.85, end: 0 },
+            lifespan: { min: 350, max: 520 },
+            angle: { min: 0, max: 360 },
+            gravityY: -10,
+            blendMode: Phaser.BlendModes.ADD
+        }
+    },
+    aurora: {
+        texture: 'fx_aurora',
+        settings: {
+            speed: { min: 40, max: 120 },
+            scale: { start: 0.75, end: 0.2 },
+            alpha: { start: 0.9, end: 0 },
+            lifespan: { min: 600, max: 900 },
+            angle: { min: -30, max: 30 },
+            gravityY: -40,
+            blendMode: Phaser.BlendModes.ADD
+        }
+    }
+};
 
 // Store original game dimensions for boundary calculations
 let gameWidth = gameDimensions.width;
@@ -520,22 +839,178 @@ function createParticleTexture(scene, materialId) {
     if (scene.textures.exists(textureKey)) {
         return textureKey;
     }
-    
-    // Use a small canvas to generate the particle texture
-    const textureSize = Math.max(16, PARTICLE_RADIUS * 2 + 2); // Ensure minimum size
-    const graphics = scene.add.graphics();
-    
-    // Draw a filled circle with material color
-    graphics.fillStyle(material.color, 1);
-    graphics.fillCircle(textureSize / 2, textureSize / 2, PARTICLE_RADIUS);
-    
-    // Generate texture from graphics
-    graphics.generateTexture(textureKey, textureSize, textureSize);
-    
-    // Destroy the graphics object as we only needed it to generate the texture
-    graphics.destroy();
-    
+
+    const textureSize = Math.max(28, PARTICLE_RADIUS * 6);
+    if (scene.textures.exists(textureKey)) {
+        scene.textures.remove(textureKey);
+    }
+
+    const canvasTexture = scene.textures.createCanvas(textureKey, textureSize, textureSize);
+    const ctx = canvasTexture.context;
+    const center = textureSize / 2;
+    ctx.clearRect(0, 0, textureSize, textureSize);
+
+    const innerColor = adjustColor(material.color, 0.25);
+    const midColor = material.color;
+    const outerColor = adjustColor(material.color, -0.3);
+
+    const gradient = ctx.createRadialGradient(center, center, textureSize * 0.08, center, center, center);
+    gradient.addColorStop(0, colorToCss(innerColor, 1));
+    gradient.addColorStop(0.55, colorToCss(midColor, 0.95));
+    gradient.addColorStop(1, colorToCss(outerColor, 0.6));
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(center, center, center - 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rim lighting
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = colorToCss(adjustColor(material.color, 0.35), 0.4);
+    ctx.beginPath();
+    ctx.arc(center, center, center - 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Noise sparkle / bubbles
+    const sparkleCount = material.lightEmission ? 8 : 4;
+    for (let i = 0; i < sparkleCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * (center - 4);
+        const px = center + Math.cos(angle) * radius;
+        const py = center + Math.sin(angle) * radius;
+        const sparkleRadius = material.viscosity ? 1.2 + Math.random() * 0.8 : 1 + Math.random() * 0.6;
+        const sparkleGradient = ctx.createRadialGradient(px, py, 0, px, py, sparkleRadius);
+        sparkleGradient.addColorStop(0, colorToCss(adjustColor(material.color, 0.5), material.lightEmission ? 0.95 : 0.8));
+        sparkleGradient.addColorStop(0.7, colorToCss(adjustColor(material.color, 0.2), material.lightEmission ? 0.4 : 0.3));
+        sparkleGradient.addColorStop(1, colorToCss(adjustColor(material.color, -0.4), 0));
+        ctx.fillStyle = sparkleGradient;
+        ctx.beginPath();
+        ctx.arc(px, py, sparkleRadius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Add subtle directional streaks for flowing materials
+    if (material.viscosity !== undefined) {
+        ctx.strokeStyle = colorToCss(adjustColor(material.color, -0.15), 0.15);
+        ctx.lineWidth = 1;
+        const streaks = Math.max(2, Math.round(4 - material.viscosity * 8));
+        for (let s = 0; s < streaks; s++) {
+            const angle = Math.random() * Math.PI * 2;
+            const startRadius = center * 0.1;
+            const endRadius = center * (0.4 + Math.random() * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(center + Math.cos(angle) * startRadius, center + Math.sin(angle) * startRadius);
+            ctx.lineTo(center + Math.cos(angle) * endRadius, center + Math.sin(angle) * endRadius);
+            ctx.stroke();
+        }
+    }
+
+    // Heat glow overlay for high temperature materials
+    if (material.heatOutput || material.heatRate > 4) {
+        const glowGradient = ctx.createRadialGradient(center, center, center * 0.2, center, center, center);
+        glowGradient.addColorStop(0, colorToCss(adjustColor(material.color, 0.6), 0.4));
+        glowGradient.addColorStop(1, colorToCss(adjustColor(material.color, 0.2), 0));
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(center, center, center - 1, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    if (material.eventMaterial) {
+        for (let b = 0; b < 3; b++) {
+            const angle = (Math.PI * 2 / 3) * b + Math.random() * 0.35;
+            const gradient = ctx.createLinearGradient(
+                center + Math.cos(angle) * center,
+                center + Math.sin(angle) * center,
+                center - Math.cos(angle) * center,
+                center - Math.sin(angle) * center
+            );
+            gradient.addColorStop(0, 'rgba(58, 214, 255, 0)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.35)');
+            gradient.addColorStop(1, 'rgba(58, 214, 255, 0)');
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 1.5 + Math.random();
+            ctx.beginPath();
+            ctx.arc(center, center, center - 3, angle - 0.7, angle + 0.7);
+            ctx.stroke();
+        }
+    }
+
+    canvasTexture.refresh();
     return textureKey;
+}
+
+function ensureEffectSystems(scene) {
+    if (!scene) {
+        return;
+    }
+    if (!effectTexturesReady) {
+        Object.values(EFFECT_TEXTURE_SPECS).forEach(spec => {
+            createEffectTexture(scene, spec);
+        });
+        effectTexturesReady = true;
+    }
+    Object.entries(EFFECT_EMITTER_CONFIGS).forEach(([key, config]) => {
+        if (!effectManagers[key]) {
+            effectManagers[key] = scene.add.particles(config.texture);
+        }
+        if (!effectEmitters[key]) {
+            const emitterManager = effectManagers[key];
+            let emitter;
+            const emitterConfig = {
+                ...config.settings,
+                on: false
+            };
+            if (emitterManager.addEmitter) {
+                emitter = emitterManager.addEmitter(emitterConfig);
+            } else if (emitterManager.emitters && emitterManager.emitters.add) {
+                emitter = emitterManager.emitters.add(emitterConfig);
+            }
+            if (!emitter) {
+                console.warn('Unable to create particle emitter for effect', key);
+                return;
+            }
+            effectEmitters[key] = emitter;
+        }
+    });
+}
+
+function createEffectTexture(scene, spec) {
+    if (!scene || !spec) {
+        return;
+    }
+    if (scene.textures.exists(spec.key)) {
+        scene.textures.remove(spec.key);
+    }
+    const size = Math.max(16, spec.radius * 2);
+    const texture = scene.textures.createCanvas(spec.key, size, size);
+    const ctx = texture.context;
+    const center = size / 2;
+    ctx.clearRect(0, 0, size, size);
+    const gradient = ctx.createRadialGradient(center, center, 0, center, center, center);
+    gradient.addColorStop(0, colorToCss(spec.inner, 1));
+    gradient.addColorStop(0.6, colorToCss(spec.inner, 0.6));
+    gradient.addColorStop(1, colorToCss(spec.outer, 0));
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(center, center, center, 0, Math.PI * 2);
+    ctx.fill();
+    texture.refresh();
+}
+
+function getEffectEmitter(effectKey) {
+    if (!currentScene) {
+        return null;
+    }
+    ensureEffectSystems(currentScene);
+    return effectEmitters[effectKey] || null;
+}
+
+function emitEffectBurst(effectKey, quantity, x, y) {
+    const emitter = getEffectEmitter(effectKey);
+    if (emitter) {
+        emitter.explode(quantity, x, y);
+    }
 }
 
 function create() {
@@ -551,6 +1026,8 @@ function create() {
         createParticleTexture(this, materialId);
     });
     console.log('Particle textures created for all materials');
+
+    ensureEffectSystems(this);
     
     // Apply pending sync data if any (queue for batch creation)
     if (pendingSyncData) {
@@ -609,17 +1086,19 @@ function create() {
     
     // Mouse/touch input with optimized touch handling
     this.input.on('pointerdown', (pointer) => {
-        // Prevent default browser behaviors
-        if (pointer.event && pointer.event.preventDefault) {
-            pointer.event.preventDefault();
-        }
-        placeSand(pointer.x, pointer.y);
+        handlePointerDown(pointer);
     });
     
     this.input.on('pointermove', (pointer) => {
-        if (pointer.isDown) {
-            placeSand(pointer.x, pointer.y);
-        }
+        handlePointerMove(pointer);
+    });
+
+    this.input.on('pointerup', (pointer) => {
+        handlePointerUp(pointer);
+    });
+
+    this.input.on('pointerupoutside', (pointer) => {
+        handlePointerUp(pointer);
     });
     
     // Keyboard input for reset (Delete or Backspace key)
@@ -633,37 +1112,20 @@ function create() {
     });
     
     // Keyboard shortcuts for material selection (1-8, Q, W, E, R, T, Y)
-    // Use key codes directly: 49='1', 50='2', 51='3', 52='4', 53='5', 54='6', 55='7', 56='8'
-    // 81='Q', 87='W', 69='E', 82='R', 84='T', 89='Y'
     this.input.keyboard.on('keydown', (event) => {
-        if (event.keyCode === 49 || event.key === '1') {
-            selectMaterial('SAND');
-        } else if (event.keyCode === 50 || event.key === '2') {
-            selectMaterial('WATER');
-        } else if (event.keyCode === 51 || event.key === '3') {
-            selectMaterial('FIRE');
-        } else if (event.keyCode === 52 || event.key === '4') {
-            selectMaterial('ACID');
-        } else if (event.keyCode === 53 || event.key === '5') {
-            selectMaterial('ICE');
-        } else if (event.keyCode === 54 || event.key === '6') {
-            selectMaterial('OIL');
-        } else if (event.keyCode === 55 || event.key === '7') {
-            selectMaterial('STEAM');
-        } else if (event.keyCode === 56 || event.key === '8') {
-            selectMaterial('LAVA');
-        } else if (event.keyCode === 81 || event.key === 'q' || event.key === 'Q') {
-            selectMaterial('WOOD');
-        } else if (event.keyCode === 87 || event.key === 'w' || event.key === 'W') {
-            selectMaterial('STONE');
-        } else if (event.keyCode === 69 || event.key === 'e' || event.key === 'E') {
-            selectMaterial('GAS');
-        } else if (event.keyCode === 82 || event.key === 'r' || event.key === 'R') {
-            selectMaterial('METAL');
-        } else if (event.keyCode === 84 || event.key === 't' || event.key === 'T') {
-            selectMaterial('SMOKE');
-        } else if (event.keyCode === 89 || event.key === 'y' || event.key === 'Y') {
-            selectMaterial('GLASS');
+        const key = (event.key || '').toUpperCase();
+        if (!key) {
+            return;
+        }
+
+        if (TOOL_SHORTCUTS[key]) {
+            selectTool(TOOL_SHORTCUTS[key]);
+            return;
+        }
+
+        const entry = Object.entries(MATERIAL_METADATA).find(([, meta]) => meta.shortcut && meta.shortcut.toUpperCase() === key);
+        if (entry) {
+            selectMaterial(entry[0]);
         }
     });
     
@@ -848,37 +1310,69 @@ function update() {
 }
 
 function placeSand(x, y) {
-    // Don't place near boundaries (scale with game dimensions)
-    const margin = 25;
-    if (x < margin || x > gameWidth - margin || y < margin || y > gameHeight - margin) {
-        return;
+    return placeMaterialAt(x, y, currentMaterial);
+}
+
+function placeMaterialAt(x, y, materialId, options = {}) {
+    if (!currentScene) {
+        return null;
     }
-    
-    // Create local particle with currently selected material
-    const material = MATERIALS[currentMaterial] || MATERIALS.SAND;
-    const particle = createParticle(x, y, currentMaterial);
-    
+    const margin = options.margin ?? 25;
+    if (!isWithinPlacementBounds(x, y, margin)) {
+        return null;
+    }
+
+    const targetMaterial = MATERIALS[materialId] || MATERIALS.SAND;
+    const particle = createParticle(x, y, targetMaterial.id);
+
     if (!particle) {
+        return null;
+    }
+
+    if (options.skipNetwork !== true) {
+        queueMaterialForNetwork(x, y, targetMaterial.id);
+    }
+
+    return particle;
+}
+
+function queueMaterialForNetwork(x, y, materialId) {
+    if (!socket || !socket.connected) {
         return;
     }
-    
-    // Add to batch buffer with material type
-    if (socket && socket.connected) {
-        sandPlacementBuffer.push({ 
-            x, 
-            y, 
-            materialType: currentMaterial,
-            color: material.color // Keep for backward compatibility
-        });
-        
-        // Flush buffer if it reaches threshold
-        if (sandPlacementBuffer.length >= BATCH_SIZE) {
-            flushSandBatch();
-        } else if (!batchTimer) {
-            // Schedule flush if not already scheduled
-            batchTimer = setTimeout(flushSandBatch, BATCH_INTERVAL);
+    const material = MATERIALS[materialId] || MATERIALS.SAND;
+    sandPlacementBuffer.push({
+        x,
+        y,
+        materialType: materialId,
+        color: material.color
+    });
+
+    if (sandPlacementBuffer.length >= BATCH_SIZE) {
+        flushSandBatch();
+    } else if (!batchTimer) {
+        batchTimer = setTimeout(flushSandBatch, BATCH_INTERVAL);
+    }
+}
+
+function spawnMaterialCluster(points, materialId, options = {}) {
+    if (!Array.isArray(points)) {
+        return [];
+    }
+    const created = [];
+    for (let i = 0; i < points.length; i++) {
+        const point = points[i];
+        if (!point) continue;
+        const particle = placeMaterialAt(point.x, point.y, materialId, options);
+        if (particle) {
+            created.push(particle);
         }
     }
+    return created;
+}
+
+function isWithinPlacementBounds(x, y, margin = 25) {
+    return x >= margin && x <= gameWidth - margin && y >= margin && y <= gameHeight - margin;
 }
 
 function flushSandBatch() {
@@ -917,6 +1411,22 @@ function createParticle(x, y, materialId) {
     
     // Create sprite from texture for efficient batching
     const sprite = currentScene.add.sprite(x, y, textureKey);
+
+    let glowTween = null;
+    if (material.lightEmission || material.eventMaterial) {
+        sprite.setBlendMode(Phaser.BlendModes.ADD);
+        const tweenDuration = 680 + Math.random() * 520;
+        glowTween = currentScene.tweens.add({
+            targets: sprite,
+            alpha: { from: 1, to: 0.55 },
+            scale: { from: 1, to: 1.08 },
+            duration: tweenDuration,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+            delay: Math.random() * 360
+        });
+    }
     
     // Create separate Matter.js physics body with material-specific properties
     const bodyOptions = {
@@ -953,7 +1463,8 @@ function createParticle(x, y, materialId) {
         color: material.color, // Keep for backward compatibility
         heatLevel: 0, // Initialize heat level for gradual fire spreading
         creationTime: Date.now(), // Track when particle was created
-        previousVelocityY: 0 // Track previous velocity for impact detection
+        previousVelocityY: 0, // Track previous velocity for impact detection
+        glowTween
     };
     
     particles.push(particle);
@@ -972,6 +1483,246 @@ function createSandParticle(x, y, color) {
         }
     }
     return createParticle(x, y, materialId);
+}
+
+function generateBrushPoints(x, y, radius, densityMultiplier = 1) {
+    const points = [];
+    const safeRadius = Math.max(1, radius);
+    const baseDensity = Math.max(4, Math.round((safeRadius * safeRadius) / 14));
+    const total = Math.min(120, Math.round(baseDensity * densityMultiplier));
+    for (let i = 0; i < total; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * safeRadius;
+        points.push({
+            x: x + Math.cos(angle) * distance,
+            y: y + Math.sin(angle) * distance
+        });
+    }
+    return points;
+}
+
+function applyBrushStroke(from, to, forceStart = false) {
+    if (!from || !to) {
+        return;
+    }
+    const distance = Phaser.Math.Distance.Between(from.x, from.y, to.x, to.y);
+    const step = Math.max(6, brushSize * 0.7);
+    const steps = Math.max(1, Math.floor(distance / step));
+    for (let i = 0; i <= steps; i++) {
+        if (!forceStart && steps === 0 && i > 0) {
+            continue;
+        }
+        const t = steps === 0 ? 1 : i / steps;
+        const px = Phaser.Math.Linear(from.x, to.x, t);
+        const py = Phaser.Math.Linear(from.y, to.y, t);
+        const points = generateBrushPoints(px, py, brushSize, 0.85);
+        spawnMaterialCluster(points, currentMaterial);
+    }
+    lastBrushPoint = { x: to.x, y: to.y };
+}
+
+function createLinePoints(start, end, spacing) {
+    const points = [];
+    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+    const steps = Math.max(1, Math.floor(distance / spacing));
+    for (let i = 0; i <= steps; i++) {
+        const t = steps === 0 ? 1 : i / steps;
+        const x = Phaser.Math.Linear(start.x, end.x, t);
+        const y = Phaser.Math.Linear(start.y, end.y, t);
+        points.push({ x, y });
+    }
+    return points;
+}
+
+function createRectanglePoints(start, end, spacing) {
+    const points = [];
+    const minX = Math.min(start.x, end.x);
+    const maxX = Math.max(start.x, end.x);
+    const minY = Math.min(start.y, end.y);
+    const maxY = Math.max(start.y, end.y);
+    for (let x = minX; x <= maxX; x += spacing) {
+        for (let y = minY; y <= maxY; y += spacing) {
+            points.push({ x, y });
+        }
+    }
+    return points;
+}
+
+function createCirclePoints(center, edgePoint, spacing) {
+    const radius = Phaser.Math.Distance.Between(center.x, center.y, edgePoint.x, edgePoint.y);
+    const points = [];
+    const stepAngle = spacing / (radius + 0.0001);
+    for (let angle = 0; angle < Math.PI * 2; angle += stepAngle) {
+        const x = center.x + Math.cos(angle) * radius;
+        const y = center.y + Math.sin(angle) * radius;
+        points.push({ x, y });
+    }
+    const ringCount = Math.max(1, Math.floor(radius / spacing));
+    for (let r = radius - spacing; r > spacing; r -= spacing) {
+        for (let angle = 0; angle < Math.PI * 2; angle += stepAngle * 1.8) {
+            const x = center.x + Math.cos(angle) * r;
+            const y = center.y + Math.sin(angle) * r;
+            points.push({ x, y });
+        }
+    }
+    return points;
+}
+
+function applyFanEffect(start, end) {
+    if (!start || !end) {
+        return;
+    }
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.max(10, Math.sqrt(dx * dx + dy * dy));
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    const radius = Math.max(80, brushSize * 4);
+    const baseStrength = 0.0008 + Math.min(0.0022, distance / 180000);
+    particles.forEach(particle => {
+        if (!particle.body || !particle.body.position) return;
+        const px = particle.body.position.x;
+        const py = particle.body.position.y;
+        const pdx = px - start.x;
+        const pdy = py - start.y;
+        const dist = Math.sqrt(pdx * pdx + pdy * pdy);
+        if (dist > radius || dist === 0) return;
+        const falloff = 1 - dist / radius;
+        const force = baseStrength * falloff * (particle.materialType === 'SMOKE' ? 0.4 : 1);
+        try {
+            if (typeof Matter !== 'undefined' && Matter.Body && Matter.Body.applyForce) {
+                Matter.Body.applyForce(particle.body, particle.body.position, {
+                    x: dirX * force,
+                    y: dirY * force
+                });
+            } else if (particle.body.velocity) {
+                particle.body.velocity.x += dirX * force * 1800;
+                particle.body.velocity.y += dirY * force * 1800;
+            }
+        } catch (e) {
+            // ignore errors
+        }
+    });
+    emitEffectBurst('smoke', 10, start.x, start.y);
+    playReactionSound('fan', 0.4);
+}
+
+function sampleMaterialAt(x, y) {
+    let closest = null;
+    let closestDist = Infinity;
+    const searchRadius = 24;
+    for (let i = 0; i < particles.length; i++) {
+        const particle = particles[i];
+        if (!particle.body || !particle.body.position) continue;
+        const px = particle.body.position.x;
+        const py = particle.body.position.y;
+        const dx = px - x;
+        const dy = py - y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < closestDist && dist <= searchRadius) {
+            closest = particle;
+            closestDist = dist;
+        }
+    }
+    if (closest) {
+        selectMaterial(closest.materialType);
+        pingMaterialButton(closest.materialType);
+        createShimmerEffect(closest.body.position.x, closest.body.position.y);
+    }
+}
+
+function handlePointerDown(pointer) {
+    if (pointer.event && pointer.event.preventDefault) {
+        pointer.event.preventDefault();
+    }
+    resumeAudioContext();
+    pointerStart = { x: pointer.x, y: pointer.y };
+    pointerLatest = { x: pointer.x, y: pointer.y };
+    isPointerDown = true;
+    lastBrushPoint = null;
+
+    if (currentTool === 'dropper') {
+        sampleMaterialAt(pointer.x, pointer.y);
+        isPointerDown = false;
+        pointerStart = null;
+        return;
+    }
+
+    if (currentTool === 'brush') {
+        applyBrushStroke(pointerStart, pointerStart, true);
+    }
+}
+
+function handlePointerMove(pointer) {
+    if (!isPointerDown) {
+        return;
+    }
+    pointerLatest = { x: pointer.x, y: pointer.y };
+    if (currentTool === 'brush') {
+        const from = lastBrushPoint || pointerStart || pointerLatest;
+        applyBrushStroke(from, pointerLatest, !lastBrushPoint);
+    }
+}
+
+function handlePointerUp(pointer) {
+    const endPoint = { x: pointer.x, y: pointer.y };
+    if (currentTool === 'brush') {
+        if (isPointerDown && pointerStart) {
+            const from = lastBrushPoint || pointerStart;
+            applyBrushStroke(from, endPoint, true);
+        }
+    } else if (currentTool === 'line' && pointerStart) {
+        const spacing = Math.max(6, brushSize * 0.75);
+        const linePoints = createLinePoints(pointerStart, endPoint, spacing);
+        spawnMaterialCluster(linePoints, currentMaterial);
+    } else if (currentTool === 'rectangle' && pointerStart) {
+        const spacing = Math.max(6, brushSize * 0.8);
+        const rectPoints = createRectanglePoints(pointerStart, endPoint, spacing);
+        spawnMaterialCluster(rectPoints, currentMaterial);
+    } else if (currentTool === 'circle' && pointerStart) {
+        const spacing = Math.max(5, brushSize * 0.6);
+        const circlePoints = createCirclePoints(pointerStart, endPoint, spacing);
+        spawnMaterialCluster(circlePoints, currentMaterial);
+    } else if (currentTool === 'fan' && pointerStart) {
+        applyFanEffect(pointerStart, endPoint);
+    }
+
+    pointerStart = null;
+    pointerLatest = null;
+    lastBrushPoint = null;
+    isPointerDown = false;
+}
+
+function selectTool(toolId) {
+    if (!toolId || currentTool === toolId) {
+        return;
+    }
+    currentTool = toolId;
+    updateToolButtons();
+}
+
+function updateToolButtons() {
+    const toolButtons = document.querySelectorAll('.tool-btn');
+    toolButtons.forEach(btn => {
+        if (btn.dataset.tool === currentTool) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function updateBrushSizeUI() {
+    const display = document.getElementById('brush-size-value');
+    if (display) {
+        display.textContent = brushSize.toString();
+    }
+}
+
+function resumeAudioContext() {
+    if (reactionAudioContext && reactionAudioContext.state === 'suspended') {
+        reactionAudioContext.resume().catch(() => {});
+    }
 }
 
 // Track reactions to prevent duplicate processing
@@ -1051,6 +1802,7 @@ function handleCollisions(pairs) {
         let convertB = null; // Material ID to convert particleB to
         let createMaterial = null; // Material ID to create
         let reactionName = null;
+        let reactionLogged = false;
         
         // Check if materialA has a reaction with materialB
         if (materialA.reactions && materialA.reactions[materialB.id]) {
@@ -1096,6 +1848,57 @@ function handleCollisions(pairs) {
                             convertB = 'FIRE';
                         }
                     }
+                    break;
+                case 'GLASSIFY':
+                    if (particleA.materialType === 'SAND') {
+                        convertA = 'GLASS';
+                    }
+                    if (particleB.materialType === 'SAND') {
+                        convertB = 'GLASS';
+                    }
+                    break;
+                case 'CRYSTALLIZE':
+                    if (particleA.materialType === 'GLASS' || particleA.materialType === 'GLOW_GLASS') {
+                        convertA = 'CRYSTAL';
+                    }
+                    if (particleB.materialType === 'GLASS' || particleB.materialType === 'GLOW_GLASS') {
+                        convertB = 'CRYSTAL';
+                    }
+                    break;
+                case 'PLASMAFY':
+                    if (particleA.materialType !== 'PLASMA') {
+                        convertA = 'PLASMA';
+                    }
+                    if (particleB.materialType !== 'PLASMA') {
+                        convertB = 'PLASMA';
+                    }
+                    break;
+                case 'AURORA_EVENT':
+                    if (particleA.materialType !== 'AURORA') {
+                        convertA = 'AURORA';
+                    }
+                    if (particleB.materialType !== 'AURORA') {
+                        convertB = 'AURORA';
+                    }
+                    break;
+                case 'FOAMIFY':
+                    if (particleA.materialType === 'WATER' || particleA.materialType === 'GAS' || particleA.materialType === 'STEAM') {
+                        convertA = 'FOAM';
+                    }
+                    if (particleB.materialType === 'WATER' || particleB.materialType === 'GAS' || particleB.materialType === 'STEAM') {
+                        convertB = 'FOAM';
+                    }
+                    break;
+                case 'ENERGIZE':
+                    if (particleA.materialType === 'GLASS' || particleA.materialType === 'CRYSTAL') {
+                        convertA = 'GLOW_GLASS';
+                    }
+                    if (particleB.materialType === 'GLASS' || particleB.materialType === 'CRYSTAL') {
+                        convertB = 'GLOW_GLASS';
+                    }
+                    break;
+                case 'SHIMMER':
+                    // Visual-only, handled later
                     break;
                 case 'MELT':
                     // Ice melts to water
@@ -1289,6 +2092,57 @@ function handleCollisions(pairs) {
                         }
                     }
                     break;
+                case 'GLASSIFY':
+                    if (particleA.materialType === 'SAND') {
+                        convertA = 'GLASS';
+                    }
+                    if (particleB.materialType === 'SAND') {
+                        convertB = 'GLASS';
+                    }
+                    break;
+                case 'CRYSTALLIZE':
+                    if (particleA.materialType === 'GLASS' || particleA.materialType === 'GLOW_GLASS') {
+                        convertA = 'CRYSTAL';
+                    }
+                    if (particleB.materialType === 'GLASS' || particleB.materialType === 'GLOW_GLASS') {
+                        convertB = 'CRYSTAL';
+                    }
+                    break;
+                case 'PLASMAFY':
+                    if (particleA.materialType !== 'PLASMA') {
+                        convertA = 'PLASMA';
+                    }
+                    if (particleB.materialType !== 'PLASMA') {
+                        convertB = 'PLASMA';
+                    }
+                    break;
+                case 'AURORA_EVENT':
+                    if (particleA.materialType !== 'AURORA') {
+                        convertA = 'AURORA';
+                    }
+                    if (particleB.materialType !== 'AURORA') {
+                        convertB = 'AURORA';
+                    }
+                    break;
+                case 'FOAMIFY':
+                    if (particleA.materialType === 'WATER' || particleA.materialType === 'GAS' || particleA.materialType === 'STEAM') {
+                        convertA = 'FOAM';
+                    }
+                    if (particleB.materialType === 'WATER' || particleB.materialType === 'GAS' || particleB.materialType === 'STEAM') {
+                        convertB = 'FOAM';
+                    }
+                    break;
+                case 'ENERGIZE':
+                    if (particleA.materialType === 'GLASS' || particleA.materialType === 'CRYSTAL') {
+                        convertA = 'GLOW_GLASS';
+                    }
+                    if (particleB.materialType === 'GLASS' || particleB.materialType === 'CRYSTAL') {
+                        convertB = 'GLOW_GLASS';
+                    }
+                    break;
+                case 'SHIMMER':
+                    // Visual-only reaction handled later
+                    break;
                 case 'MELT':
                     // Ice melts to water
                     if (particleB.materialType === 'ICE') {
@@ -1446,6 +2300,10 @@ function handleCollisions(pairs) {
                 x: pos.x,
                 y: pos.y
             });
+            if (reactionType && !reactionLogged) {
+                registerReaction(reactionType, materialA.id, materialB.id, reactionName);
+                reactionLogged = true;
+            }
         }
         if (convertB && !particlesToRemove.has(particleB)) {
             processedReactions.add(reactionKey);
@@ -1456,6 +2314,10 @@ function handleCollisions(pairs) {
                 x: pos.x,
                 y: pos.y
             });
+            if (reactionType && !reactionLogged) {
+                registerReaction(reactionType, materialA.id, materialB.id, reactionName);
+                reactionLogged = true;
+            }
         }
         
         // Handle creation reactions
@@ -1468,6 +2330,10 @@ function handleCollisions(pairs) {
                 x: reactionX,
                 y: reactionY
             });
+            if (reactionType && !reactionLogged) {
+                registerReaction(reactionType, materialA.id, materialB.id, reactionName);
+                reactionLogged = true;
+            }
         }
         
         // If reaction detected, mark for removal and animation
@@ -1486,6 +2352,11 @@ function handleCollisions(pairs) {
                 materialA: materialA.id,
                 materialB: materialB.id
             });
+
+            if (reactionType && !reactionLogged) {
+                registerReaction(reactionType, materialA.id, materialB.id, reactionName);
+                reactionLogged = true;
+            }
             
             // Mark particles for removal
             if (removeA && !particlesToRemove.has(particleA)) {
@@ -1494,6 +2365,20 @@ function handleCollisions(pairs) {
             if (removeB && !particlesToRemove.has(particleB)) {
                 particlesToRemove.add(particleB);
             }
+        }
+
+        if (!reactionLogged && reactionType && !removeA && !removeB && !convertA && !convertB && !createMaterial) {
+            const reactionX = (particleA.body.position.x + particleB.body.position.x) / 2;
+            const reactionY = (particleA.body.position.y + particleB.body.position.y) / 2;
+            animationsToCreate.push({
+                type: reactionType,
+                x: reactionX,
+                y: reactionY,
+                materialA: materialA.id,
+                materialB: materialB.id
+            });
+            registerReaction(reactionType, materialA.id, materialB.id, reactionName);
+            reactionLogged = true;
         }
     });
     
@@ -1588,59 +2473,45 @@ function createReactionAnimation(reactionType, x, y, materialA, materialB) {
             // Create smoke effect
             createSmokeEffect(x, y);
             break;
+        case 'GLASSIFY':
+            createGlassifyEffect(x, y);
+            break;
+        case 'CRYSTALLIZE':
+            createCrystalEffect(x, y);
+            break;
+        case 'AURORA_EVENT':
+            createAuroraEffect(x, y);
+            break;
+        case 'PLASMAFY':
+            createPlasmaEffect(x, y);
+            break;
+        case 'FOAMIFY':
+            createFoamEffect(x, y);
+            break;
+        case 'ENERGIZE':
+            createEnergizeEffect(x, y);
+            break;
+        case 'SHIMMER':
+            createShimmerEffect(x, y);
+            break;
+        case 'SHIMMER_RING':
+            createShimmerEffect(x, y);
+            break;
     }
 }
 
 // Steam effect for water + fire
 function createSteamEffect(x, y) {
     if (!currentScene) return;
-    
-    const steamCount = 5;
-    for (let i = 0; i < steamCount; i++) {
-        const offsetX = (Math.random() - 0.5) * 20;
-        const offsetY = (Math.random() - 0.5) * 20;
-        const steam = currentScene.add.circle(x + offsetX, y + offsetY, 2, 0xffffff, 0.6);
-        
-        // Animate steam rising
-        currentScene.tweens.add({
-            targets: steam,
-            y: y - 40 - Math.random() * 20,
-            x: x + offsetX + (Math.random() - 0.5) * 15,
-            alpha: 0,
-            scale: 1.5,
-            duration: 400 + Math.random() * 200,
-            ease: 'Power2',
-            onComplete: () => {
-                steam.destroy();
-            }
-        });
-    }
+    emitEffectBurst('steam', 20, x, y);
+    playReactionSound('steam', 0.6);
 }
 
 // Smoke effect for fire extinguished
 function createSmokeEffect(x, y) {
     if (!currentScene) return;
-    
-    const smokeCount = 3;
-    for (let i = 0; i < smokeCount; i++) {
-        const offsetX = (Math.random() - 0.5) * 15;
-        const offsetY = (Math.random() - 0.5) * 15;
-        const smoke = currentScene.add.circle(x + offsetX, y + offsetY, 3, 0x555555, 0.7);
-        
-        // Animate smoke rising and fading
-        currentScene.tweens.add({
-            targets: smoke,
-            y: y - 30 - Math.random() * 15,
-            x: x + offsetX + (Math.random() - 0.5) * 10,
-            alpha: 0,
-            scale: 2,
-            duration: 300 + Math.random() * 150,
-            ease: 'Power2',
-            onComplete: () => {
-                smoke.destroy();
-            }
-        });
-    }
+    emitEffectBurst('smoke', 14, x, y);
+    playReactionSound('smoke', 0.45);
 }
 
 // Gas bubble effect for acid + sand
@@ -1718,6 +2589,117 @@ function createFrostEffect(x, y) {
                 frost.destroy();
             }
         });
+    }
+}
+
+function createFoamEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('foam', 24, x, y);
+    playReactionSound('foam', 0.5);
+}
+
+function createPlasmaEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('plasma', 20, x, y);
+    emitEffectBurst('spark', 10, x, y);
+    playReactionSound('plasma', 0.9);
+    if (currentScene.cameras && currentScene.cameras.main) {
+        currentScene.cameras.main.flash(120, 255, 120, 255, 180);
+    }
+}
+
+function createAuroraEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('aurora', 28, x, y);
+    emitEffectBurst('spark', 12, x, y);
+    playReactionSound('aurora', 0.7);
+    if (currentScene.cameras && currentScene.cameras.main) {
+        currentScene.cameras.main.flash(140, 150, 200, 255, 200);
+        currentScene.cameras.main.shake(180, 0.004);
+    }
+}
+
+function createCrystalEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('crystal', 18, x, y);
+    playReactionSound('crystal', 0.6);
+}
+
+function createGlassifyEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('shimmer', 16, x, y);
+    emitEffectBurst('spark', 8, x, y);
+    playReactionSound('glassify', 0.7);
+}
+
+function createEnergizeEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('shimmer', 20, x, y);
+    playReactionSound('energize', 0.8);
+}
+
+function createShimmerEffect(x, y) {
+    if (!currentScene) return;
+    emitEffectBurst('shimmer', 12, x, y);
+    playReactionSound('shimmer', 0.45);
+}
+
+function playReactionSound(type, intensity = 1) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+        return;
+    }
+    try {
+        if (!reactionAudioContext) {
+            reactionAudioContext = new AudioContextClass();
+        }
+        const ctx = reactionAudioContext;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        const baseFrequencies = {
+            explosion: 180,
+            spark: 540,
+            steam: 280,
+            smoke: 220,
+            foam: 260,
+            plasma: 720,
+            crystal: 420,
+            glassify: 480,
+            energize: 560,
+            shimmer: 640,
+            aurora: 500,
+            fan: 200
+        };
+
+        const waveform = {
+            explosion: 'sawtooth',
+            spark: 'triangle',
+            plasma: 'square',
+            crystal: 'triangle',
+            glassify: 'sine',
+            energize: 'sawtooth',
+            shimmer: 'sine',
+            aurora: 'triangle',
+            fan: 'sine'
+        };
+
+        const baseFreq = baseFrequencies[type] || 320;
+        const frequency = baseFreq * (1 + (Math.random() - 0.5) * 0.25);
+        osc.type = waveform[type] || 'triangle';
+        osc.frequency.setValueAtTime(frequency, now);
+
+        gain.gain.setValueAtTime(0.16 * intensity, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.46);
+    } catch (e) {
+        // Audio might be blocked until user interaction; silently ignore
     }
 }
 
@@ -2174,29 +3156,8 @@ function convertParticleMaterial(particle, newMaterialId, x, y) {
 // Spark effect for fire spreading to sand
 function createSparkEffect(x, y) {
     if (!currentScene) return;
-    
-    const sparkCount = 2;
-    for (let i = 0; i < sparkCount; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 2;
-        const offsetX = Math.cos(angle) * 5;
-        const offsetY = Math.sin(angle) * 5;
-        const spark = currentScene.add.circle(x + offsetX, y + offsetY, 1, 0xffaa00, 0.8);
-        
-        // Animate spark
-        currentScene.tweens.add({
-            targets: spark,
-            x: x + offsetX + Math.cos(angle) * 10,
-            y: y + offsetY + Math.sin(angle) * 10,
-            alpha: 0,
-            scale: 0.5,
-            duration: 150 + Math.random() * 100,
-            ease: 'Power2',
-            onComplete: () => {
-                spark.destroy();
-            }
-        });
-    }
+    emitEffectBurst('spark', 14, x, y);
+    playReactionSound('spark', 0.8);
 }
 
 // Explosion effect for gas + fire
@@ -2238,54 +3199,33 @@ function createExplosionEffect(x, y) {
         }
     });
     
-    // Create visual explosion effects with more particles and colors
-    const explosionCount = 20;
-    for (let i = 0; i < explosionCount; i++) {
-        const angle = (Math.PI * 2 / explosionCount) * i + Math.random() * 0.3;
-        const speed = 3 + Math.random() * 5;
-        const offsetX = Math.cos(angle) * 3;
-        const offsetY = Math.sin(angle) * 3;
-        
-        // Vary colors for more dramatic effect
-        const colors = [0xff6600, 0xff4400, 0xffaa00, 0xff0000];
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        const spark = currentScene.add.circle(x + offsetX, y + offsetY, 2, color, 0.9);
-        
-        // Animate explosion outward
-        currentScene.tweens.add({
-            targets: spark,
-            x: x + Math.cos(angle) * speed * 20,
-            y: y + Math.sin(angle) * speed * 20,
-            alpha: 0,
-            scale: 0.3,
-            duration: 350 + Math.random() * 250,
-            ease: 'Power2',
-            onComplete: () => {
-                spark.destroy();
-            }
-        });
-    }
-    
+    emitEffectBurst('spark', 28, x, y);
+    emitEffectBurst('smoke', 18, x, y);
+    emitEffectBurst('plasma', 12, x, y);
+
+    playReactionSound('explosion', 1);
+
     // Create shockwave ring effect
-    const shockwave = currentScene.add.circle(x, y, 5, 0xffff00, 0.5);
+    const shockwave = currentScene.add.circle(x, y, 5, 0xffff99, 0.6);
     currentScene.tweens.add({
         targets: shockwave,
         scale: 8,
         alpha: 0,
-        duration: 400,
+        duration: 420,
         ease: 'Power2',
         onComplete: () => {
             shockwave.destroy();
         }
     });
     
-    // Create flash effect
-    const flash = currentScene.add.circle(x, y, 40, 0xffff00, 0.7);
+    // Create flash overlay
+    const flash = currentScene.add.rectangle(x, y, 120, 120, 0xfff2b6, 0.7);
     currentScene.tweens.add({
         targets: flash,
         alpha: 0,
-        scale: 2.5,
-        duration: 120,
+        scaleX: 2.6,
+        scaleY: 2.6,
+        duration: 160,
         ease: 'Power2',
         onComplete: () => {
             flash.destroy();
@@ -2294,7 +3234,8 @@ function createExplosionEffect(x, y) {
     
     // Camera shake effect
     if (currentScene.cameras && currentScene.cameras.main) {
-        currentScene.cameras.main.shake(200, 0.005);
+        currentScene.cameras.main.flash(160, 255, 204, 80);
+        currentScene.cameras.main.shake(260, 0.008);
     }
 }
 
@@ -2366,6 +3307,18 @@ function removeParticle(particle) {
     }
     
     // Cleanup sprite and body
+    if (particle.glowTween) {
+        try {
+            particle.glowTween.stop();
+            if (currentScene && currentScene.tweens && currentScene.tweens.remove) {
+                currentScene.tweens.remove(particle.glowTween);
+            } else if (particle.glowTween.remove) {
+                particle.glowTween.remove();
+            }
+        } catch (e) {
+            // Ignore tween cleanup errors
+        }
+    }
     if (particle.sprite && currentScene) {
         particle.sprite.destroy();
     }
@@ -2473,6 +3426,345 @@ function updateParticleCount() {
     }
 }
 
+function isMaterialUnlocked(materialId) {
+    return unlockedMaterials.has(materialId);
+}
+
+function unlockMaterial(materialId, reactionType = null) {
+    const meta = MATERIAL_METADATA[materialId] || {};
+    const alreadyUnlocked = isMaterialUnlocked(materialId);
+
+    if (!alreadyUnlocked) {
+        unlockedMaterials.add(materialId);
+    }
+
+    if (meta.eventDuration) {
+        scheduleMaterialExpiry(materialId, meta.eventDuration, !alreadyUnlocked);
+    }
+
+    if (!alreadyUnlocked) {
+        renderMaterialButtons();
+        pingMaterialButton(materialId);
+        showUnlockToast(materialId, reactionType);
+    }
+
+    if (meta.eventDuration) {
+        refreshEventTimerBadges();
+    }
+}
+
+function pingMaterialButton(materialId) {
+    const selector = document.getElementById('material-selector');
+    if (!selector) {
+        return;
+    }
+    const button = selector.querySelector(`.material-btn[data-material="${materialId}"]`);
+    if (!button) {
+        return;
+    }
+    button.classList.add('unlock-pulse');
+    if (unlockPulseTimers[materialId]) {
+        clearTimeout(unlockPulseTimers[materialId]);
+    }
+    unlockPulseTimers[materialId] = setTimeout(() => {
+        button.classList.remove('unlock-pulse');
+    }, 2400);
+}
+
+function scheduleMaterialExpiry(materialId, durationMs, justUnlocked = false) {
+    if (!durationMs) {
+        return;
+    }
+    if (materialUnlockTimeouts[materialId]) {
+        clearTimeout(materialUnlockTimeouts[materialId]);
+    }
+    const expiresAt = Date.now() + durationMs;
+    materialUnlockExpiry[materialId] = expiresAt;
+    materialUnlockTimeouts[materialId] = setTimeout(() => {
+        lockMaterial(materialId, true);
+    }, durationMs);
+    ensureEventTimerLoop();
+    if (justUnlocked) {
+        refreshEventTimerBadges();
+    }
+}
+
+function ensureEventTimerLoop() {
+    if (eventTimerInterval) {
+        return;
+    }
+    eventTimerInterval = setInterval(() => {
+        if (Object.keys(materialUnlockExpiry).length === 0) {
+            clearInterval(eventTimerInterval);
+            eventTimerInterval = null;
+            return;
+        }
+        refreshEventTimerBadges();
+    }, 1000);
+}
+
+function refreshEventTimerBadges() {
+    const selector = document.getElementById('material-selector');
+    if (!selector) {
+        return;
+    }
+    const now = Date.now();
+    const timerNodes = selector.querySelectorAll('[data-event-timer]');
+    timerNodes.forEach(node => {
+        const materialId = node.getAttribute('data-event-timer');
+        const expiry = materialUnlockExpiry[materialId];
+        if (!expiry) {
+            node.textContent = '';
+            return;
+        }
+        const remaining = Math.max(0, expiry - now);
+        node.textContent = formatDurationMs(remaining);
+        const parentButton = node.closest('.material-btn');
+        if (parentButton && !parentButton.classList.contains('locked')) {
+            const meta = MATERIAL_METADATA[materialId] || {};
+            const material = MATERIALS[materialId];
+            if (material && meta.tier === 'event') {
+                let baseTitle = material.name;
+                if (meta.shortcut) {
+                    baseTitle += ` (Key: ${meta.shortcut})`;
+                }
+                parentButton.title = `${baseTitle} • ${formatDurationMs(remaining)} remaining`;
+            }
+        }
+    });
+}
+
+function formatDurationMs(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function lockMaterial(materialId, triggeredByExpiry = false) {
+    if (!isMaterialUnlocked(materialId) || BASE_MATERIALS.includes(materialId)) {
+        return;
+    }
+    unlockedMaterials.delete(materialId);
+    if (materialUnlockTimeouts[materialId]) {
+        clearTimeout(materialUnlockTimeouts[materialId]);
+        delete materialUnlockTimeouts[materialId];
+    }
+    delete materialUnlockExpiry[materialId];
+
+    if (currentMaterial === materialId) {
+        currentMaterial = MATERIALS.SAND.id;
+    }
+
+    renderMaterialButtons();
+    selectMaterial(currentMaterial);
+
+    if (triggeredByExpiry) {
+        showUnlockToast(materialId, 'EXPIRED');
+    }
+}
+
+function renderMaterialButtons() {
+    const container = document.getElementById('material-selector');
+    if (!container) {
+        return;
+    }
+    container.innerHTML = '';
+    const entries = Object.keys(MATERIALS).sort((a, b) => {
+        const orderA = MATERIAL_METADATA[a]?.order ?? 9999;
+        const orderB = MATERIAL_METADATA[b]?.order ?? 9999;
+        return orderA - orderB;
+    });
+    entries.forEach(materialId => {
+        const material = MATERIALS[materialId];
+        const meta = MATERIAL_METADATA[materialId] || {};
+        if (!material) return;
+        const button = document.createElement('button');
+        button.className = 'material-btn';
+        button.dataset.material = materialId;
+
+        if (meta.tier === 'event') {
+            button.classList.add('event-material');
+        }
+
+        if (!isMaterialUnlocked(materialId)) {
+            button.classList.add('locked');
+            button.disabled = true;
+            const progress = materialUnlockCounters[materialId] || 0;
+            const threshold = meta.unlockThreshold || 1;
+            if (meta.unlockReaction) {
+                button.title = `Unlock via ${meta.unlockReaction} (${progress}/${threshold})`;
+            } else {
+                button.title = `Discover via experimentation (${progress}/${threshold})`;
+            }
+            if (meta.tier === 'event') {
+                button.title += ' • Limited-time material';
+            }
+        } else {
+            button.disabled = false;
+            const shortcutLabel = meta.shortcut ? ` (Key: ${meta.shortcut})` : '';
+            button.title = `${material.name}${shortcutLabel}`;
+            if (meta.tier === 'event' && materialUnlockExpiry[materialId]) {
+                const remaining = Math.max(0, materialUnlockExpiry[materialId] - Date.now());
+                button.title += ` • ${formatDurationMs(remaining)} remaining`;
+            }
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectMaterial(materialId);
+            });
+        }
+
+        const preview = document.createElement('span');
+        preview.className = 'material-preview';
+        preview.style.background = colorToCss(material.color, 1);
+
+        const label = document.createElement('span');
+        label.className = 'material-label';
+        label.textContent = material.name;
+
+        button.appendChild(preview);
+        button.appendChild(label);
+
+        if (meta.tier === 'event' && isMaterialUnlocked(materialId) && meta.eventDuration) {
+            const timer = document.createElement('span');
+            timer.className = 'material-event-timer';
+            timer.setAttribute('data-event-timer', materialId);
+            button.appendChild(timer);
+        }
+
+        if (materialId === currentMaterial) {
+            button.classList.add('active');
+        }
+
+        container.appendChild(button);
+    });
+    updateToolButtons();
+}
+
+function registerReaction(reactionType, materialAId, materialBId, reactionName) {
+    if (!reactionType) {
+        return;
+    }
+    recentReactions.unshift({
+        type: reactionType,
+        materialA: materialAId,
+        materialB: materialBId,
+        name: reactionName,
+        time: Date.now()
+    });
+    if (recentReactions.length > 25) {
+        recentReactions.pop();
+    }
+
+    const unlockTargets = REACTION_UNLOCKS[reactionType];
+    let requiresRefresh = false;
+    if (unlockTargets) {
+        unlockTargets.forEach(materialId => {
+            const meta = MATERIAL_METADATA[materialId] || {};
+            materialUnlockCounters[materialId] = (materialUnlockCounters[materialId] || 0) + 1;
+            const threshold = meta.unlockThreshold || 1;
+            if (!isMaterialUnlocked(materialId) && materialUnlockCounters[materialId] >= threshold) {
+                unlockMaterial(materialId, reactionType);
+            } else if (!isMaterialUnlocked(materialId)) {
+                pingMaterialButton(materialId);
+                requiresRefresh = true;
+            }
+        });
+    }
+
+    if (requiresRefresh) {
+        renderMaterialButtons();
+    }
+
+    updateCommunityGoalProgress(reactionType);
+}
+
+function initializeGoalsUI() {
+    const goalList = document.getElementById('goal-list');
+    if (!goalList) {
+        return;
+    }
+    goalList.innerHTML = '';
+    COMMUNITY_GOALS.forEach(goal => {
+        const item = document.createElement('li');
+        item.className = 'goal-item';
+        item.id = `goal-${goal.id}`;
+        item.innerHTML = `
+            <div class="goal-title">${goal.label}</div>
+            <div class="goal-progress"><div class="goal-progress-bar" id="goal-bar-${goal.id}"></div></div>
+            <div class="goal-count"><span id="goal-count-${goal.id}">0</span> / ${goal.target}</div>
+        `;
+        goalList.appendChild(item);
+    });
+    updateGoalsUI();
+}
+
+function updateCommunityGoalProgress(reactionType) {
+    COMMUNITY_GOALS.forEach(goal => {
+        if (goal.reaction === reactionType) {
+            communityProgress[goal.id] = Math.min(goal.target, (communityProgress[goal.id] || 0) + 1);
+        }
+    });
+    updateGoalsUI();
+}
+
+function updateGoalsUI() {
+    COMMUNITY_GOALS.forEach(goal => {
+        const progressValue = communityProgress[goal.id] || 0;
+        const bar = document.getElementById(`goal-bar-${goal.id}`);
+        const count = document.getElementById(`goal-count-${goal.id}`);
+        const item = document.getElementById(`goal-${goal.id}`);
+        const percent = Math.min(100, Math.round((progressValue / goal.target) * 100));
+        if (bar) {
+            bar.style.width = `${percent}%`;
+        }
+        if (count) {
+            count.textContent = progressValue.toString();
+        }
+        if (item) {
+            if (progressValue >= goal.target) {
+                item.classList.add('completed');
+            } else {
+                item.classList.remove('completed');
+            }
+        }
+    });
+}
+
+function showUnlockToast(materialId, reactionType) {
+    const material = MATERIALS[materialId];
+    if (!material) {
+        return;
+    }
+    let container = document.getElementById('unlock-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'unlock-toast-container';
+        container.className = 'unlock-toast-container';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = 'unlock-toast';
+    if (reactionType === 'EXPIRED') {
+        toast.textContent = `${material.name} faded away. Trigger its combo again to bring it back!`;
+    } else {
+        const reactionLabel = reactionType ? ` via ${reactionType}` : '';
+        toast.textContent = `Unlocked ${material.name}${reactionLabel}!`;
+    }
+    container.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.classList.add('visible');
+    });
+    setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.parentElement.removeChild(toast);
+            }
+        }, 400);
+    }, 2800);
+}
+
 function handleReset() {
     resetWorldState();
     // Notify server to reset for all players
@@ -2485,18 +3777,11 @@ function selectMaterial(materialId) {
     if (!MATERIALS[materialId]) {
         return;
     }
-    
+    if (!isMaterialUnlocked(materialId)) {
+        return;
+    }
     currentMaterial = materialId;
-    
-    // Update UI buttons
-    const materialButtons = document.querySelectorAll('.material-btn');
-    materialButtons.forEach(btn => {
-        if (btn.dataset.material === materialId) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
+    renderMaterialButtons();
 }
 
 function setupUIHandlers() {
@@ -2521,21 +3806,49 @@ function setupUIHandlers() {
         });
         instructionsToggle.setAttribute('data-handler-attached', 'true');
     }
-    
-    // Material selector buttons
-    const materialButtons = document.querySelectorAll('.material-btn');
-    materialButtons.forEach(btn => {
+
+    const missionsToggle = document.getElementById('missions-toggle');
+    const goalsPanel = document.getElementById('goals-panel');
+    if (missionsToggle && goalsPanel && !missionsToggle.hasAttribute('data-handler-attached')) {
+        missionsToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            goalsPanel.classList.toggle('hidden');
+            missionsToggle.textContent = goalsPanel.classList.contains('hidden')
+                ? 'Show Goals'
+                : 'Hide Goals';
+        });
+        missionsToggle.setAttribute('data-handler-attached', 'true');
+    }
+
+    setupToolHandlers();
+}
+
+function setupToolHandlers() {
+    const toolButtons = document.querySelectorAll('.tool-btn');
+    toolButtons.forEach(btn => {
         if (!btn.hasAttribute('data-handler-attached')) {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                const materialId = btn.dataset.material;
-                if (materialId) {
-                    selectMaterial(materialId);
+                const toolId = btn.dataset.tool;
+                if (toolId) {
+                    selectTool(toolId);
                 }
             });
             btn.setAttribute('data-handler-attached', 'true');
         }
     });
+    updateToolButtons();
+
+    const brushSlider = document.getElementById('brush-size');
+    if (brushSlider && !brushSlider.hasAttribute('data-handler-attached')) {
+        brushSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value, 10);
+            brushSize = Math.max(2, Math.min(60, value));
+            updateBrushSizeUI();
+        });
+        brushSlider.setAttribute('data-handler-attached', 'true');
+    }
+    updateBrushSizeUI();
 }
 
 // Initialize UI - run immediately if DOM is ready, otherwise wait
@@ -2544,11 +3857,14 @@ function initializeUI() {
         document.addEventListener('DOMContentLoaded', initializeUI);
         return;
     }
+    renderMaterialButtons();
+    updateToolButtons();
+    updateBrushSizeUI();
+    setupUIHandlers();
+    initializeGoalsUI();
     updateParticleCount();
     updateConnectionStatus(false);
-    setupUIHandlers();
-    // Initialize material selector to default (SAND)
-    selectMaterial('SAND');
+    selectMaterial(currentMaterial);
 }
 
 // Start initialization
